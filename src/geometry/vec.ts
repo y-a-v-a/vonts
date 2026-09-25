@@ -104,3 +104,20 @@ export function simplify(pts: Polyline, tolerance: number): Polyline {
   }
   return pts.filter((_, i) => keep[i]);
 }
+
+/** RDP for closed polygons: split at the vertex farthest from the first, simplify both halves. */
+export function simplifyClosed(poly: Polyline, tolerance: number): Polyline {
+  if (poly.length < 5) return poly.slice();
+  let far = 0;
+  let farD = -1;
+  for (let i = 1; i < poly.length; i++) {
+    const d = dist(poly[0], poly[i]);
+    if (d > farD) {
+      farD = d;
+      far = i;
+    }
+  }
+  const a = simplify(poly.slice(0, far + 1), tolerance);
+  const b = simplify([...poly.slice(far), poly[0]], tolerance);
+  return [...a, ...b.slice(1, -1)];
+}
