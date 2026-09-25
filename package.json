@@ -16,7 +16,8 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "train:model": "tsx scripts/train-classifier.ts",
-    "build:fonts": "tsx scripts/build-brand-fonts.ts"
+    "build:fonts": "tsx scripts/build-brand-fonts.ts",
+    "screenshots": "npm run build && node scripts/screenshots.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.56",

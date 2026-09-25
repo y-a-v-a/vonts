@@ -1,4 +1,4 @@
-import type { Polyline } from '../geometry/vec';
+import { type Polyline, bbox } from '../geometry/vec';
 import { styledStrokes } from './build';
 import type { StyleParams } from './style';
 import { strokesToOutline } from '../render/outline';
@@ -25,12 +25,17 @@ export function translate(pls: Polyline[], dx: number, dy = 0): Polyline[] {
 export function makeGlyph(char: string, style: StyleParams): GlyphData {
   const { strokes, width } = styledStrokes(char, style);
   const sb = sideBearing(style);
-  const moved = translate(strokes, sb);
+  const contours = strokesToOutline(strokes, style);
+  // Space by the real ink (serifs, hooks, wobble and slant can reach past the skeleton).
+  const ink = bbox(contours);
+  const minX = ink ? ink.minX : 0;
+  const inkWidth = ink ? ink.maxX - ink.minX : width;
+  const dx = sb - minX;
   return {
     char,
     unicode: char.codePointAt(0)!,
-    advance: Math.round(width + 2 * sb),
-    contours: strokesToOutline(moved, style),
-    strokes: moved,
+    advance: Math.round(inkWidth + 2 * sb),
+    contours: translate(contours, dx),
+    strokes: translate(strokes, dx),
   };
 }

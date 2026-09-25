@@ -6,7 +6,24 @@ vonts is a small browser app with an Illustrator-style pen tool. Draw a letter, 
 
 Everything runs in the browser, with no server and no network calls after the page loads.
 
-![vonts: a hand-drawn A generates a wide geometric alphabet](docs/screenshot.png)
+![Eight sketches, eight typefaces: every row is the word "Vonts" set in a font generated from the sketch on its left](screenshots/00-gallery.png)
+
+The **vonts** masthead is set in *Vonts Quill*, and the section headings in *Vonts Slab*. Both are `.otf` files that vonts generated from its own preset sketches (`npm run build:fonts`), so the page's typography is made with the page itself.
+
+## Screenshots
+
+| | |
+| --- | --- |
+| ![The Quill sketch and its calligraphic italic alphabet](screenshots/01-hero-quill.png) | ![Pen tool mid-drawing, with handles and the rubber-band preview](screenshots/02-pen-tool.png) |
+| **Quill:** three strokes become a hooked, high-contrast italic. The drawing is recognized as a “d” and fills that slot. | **Pen tool:** Illustrator-style anchors, handles and a live rubber band. |
+| ![A square becomes a block alphabet](screenshots/03-block-alphabet.png) | ![Block font specimen](screenshots/04-block-specimen.png) |
+| **Block:** one square, four corners, sixty-two letters. | **Live specimen:** editable text set in the generated font through `FontFace`. |
+| ![Zigzag wobble specimen](screenshots/05-zigzag-specimen.png) | ![Glyph inspector close-up with construction lines](screenshots/06-inspector.png) |
+| **Zigzag:** alternating corners turn into hand-drawn jitter. | **Inspector:** click any glyph to see its outline, centerline strokes, metrics and advance. |
+| ![Dark mode with the Slab preset](screenshots/07-dark-slab.png) | ![Phone layout with the Hex preset](screenshots/08-mobile-hex.png) |
+| **Slab (dark mode):** short kinked stroke ends become serifs. | **Hex on a phone:** a hexagon becomes a six-sided alphabet. |
+
+Regenerate them with `npm run screenshots`.
 
 ## Using it
 
@@ -25,7 +42,12 @@ Everything runs in the browser, with no server and no network calls after the pa
 | Delete point / path | Select, then <kbd>Delete</kbd> / <kbd>Backspace</kbd> |
 | Undo / redo | <kbd>Ctrl/⌘</kbd>+<kbd>Z</kbd>, <kbd>Shift</kbd>+<kbd>Ctrl/⌘</kbd>+<kbd>Z</kbd> |
 
-The generator runs 3 seconds after your last edit. A thin bar under the pad counts down, and **Generate now** skips the wait. The **Weight** slider regenerates right away. Type in the specimen line to preview text, give the font a name, and click **Export .otf**.
+The generator runs 3 seconds after your last edit. A striped bar under the pad counts down, and **Generate now** skips the wait. The **Weight** slider regenerates right away.
+
+- **Presets:** the strip above the pad loads example sketches (Loop, Quill, Block, Slab, Zigzag, Hex, Wide A, Ribbon) and generates immediately.
+- **Inspector:** click a glyph for a close-up with metric lines, the centerline strokes it was built from, and its advance width. Step through glyphs with ← / →.
+- **Live specimen:** every generation is installed as a real web font through the `FontFace` API. The waterfall under the grid is editable text in that font: click a line and type.
+- **Export:** give the font a name and click **Export .otf**.
 
 ## How it works
 
@@ -103,6 +125,8 @@ npm run test:e2e     # end-to-end tests (Playwright, builds + previews the app)
 npm run typecheck
 npm run build        # static site in dist/
 npm run train:model  # retrain the classifier (~2 min), writes src/classifier/weights.json
+npm run build:fonts  # regenerate the house fonts (Vonts Quill / Vonts Slab) from their preset sketches
+npm run screenshots  # rebuild and recapture screenshots/
 ```
 
 Dev helpers:
@@ -113,26 +137,28 @@ npx tsx scripts/contact-sheet.ts sheet.svg '{}' '{"slant":12,"contrast":0.6}' '{
 node scripts/svg-to-png.mjs sheet.svg sheet.png
 ```
 
-In the browser console, `window.vonts` exposes `loadSketch(doc)`, `sketch`, `result` and `generateNow()`.
+In the browser console, `window.vonts` exposes `loadSketch(doc)`, `loadPreset(id)`, `sketch`, `result` and `generateNow()`.
 
-Run `npm run train:model` again whenever you change the skeletons, so the classifier keeps matching them.
+Run `npm run train:model` again whenever you change the skeletons, so the classifier keeps matching them. Also run `npm run build:fonts` so the house fonts pick up the change.
 
 ### Project layout
 
 ```
 src/
-  sketch/       document model, undo history, pen/select tool controller (DOM-free), pad metrics
+  sketch/       document model, undo history, pen/select tool controller (DOM-free), pad metrics, presets
   style/        sketch → features → style parameters
   glyphs/       charset, style params, stroke pen, 62 skeletons, decorations, glyph assembly
   render/       stroke → outline expansion (Clipper)
   classifier/   rasterizer, MLP (inference + training), synthetic data, bundled weights
   export/       OpenType export
-  ui/           sketch pad view, glyph grid, specimen
+  ui/           sketch pad view, glyph grid, inspector, live FontFace specimen, thumbnails
+  assets/fonts/ the house fonts, generated by vonts itself
   generator.ts  the pipeline;  worker.ts / engine.ts  off-main-thread execution
   idle.ts       the 3-second idle trigger
-tests/unit/     Vitest: geometry, tools, features, glyphs, outlines, classifier, generator, OTF
-tests/e2e/      Playwright: drawing, idle generation, recognition, export, weight, undo, select
-scripts/        classifier training, contact sheets
+tests/unit/     Vitest: geometry, tools, features, glyphs, outlines, classifier, generator, OTF, presets
+tests/e2e/      Playwright: drawing, idle generation, recognition, export, weight, undo, select, presets, inspector, house fonts
+scripts/        classifier training, house fonts, screenshots, contact sheets
+screenshots/    README screenshots
 ```
 
 ## Deployment (GitHub Pages)
