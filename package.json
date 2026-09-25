@@ -1,0 +1,34 @@
+{
+  "name": "vonts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Sketch one glyph, get a 62-character typeface. Pen-tool sketch pad + procedural glyph generator + tiny in-browser classifier + OTF export.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --port 4173 --strictPort",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "train:model": "tsx scripts/train-classifier.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56",
+    "@types/clipper-lib": "^6.4.0",
+    "@types/node": "^26.6.2",
+    "@types/opentype.js": "^1.3.10",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.1",
+    "vitest": "^5.0.2"
+  },
+  "dependencies": {
+    "clipper-lib": "^6.4.2",
+    "opentype.js": "^2.0.0"
+  }
+}
