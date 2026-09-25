@@ -31,5 +31,10 @@ export function synthGlyph(char: string, seed: number): Polyline[] {
   const sy = 0.88 + rand() * 0.24;
   const c = Math.cos(rot);
   const s = Math.sin(rot);
-  return strokes.map((pl) => pl.map((p) => ({ x: (p.x * c - p.y * s) * sx, y: (p.x * s + p.y * c) * sy })));
+  // Hand-placed strokes rarely meet exactly: nudge each stroke a little.
+  return strokes.map((pl) => {
+    const dx = (rand() * 2 - 1) * 14;
+    const dy = (rand() * 2 - 1) * 14;
+    return pl.map((p) => ({ x: (p.x * c - p.y * s) * sx + dx, y: (p.x * s + p.y * c) * sy + dy }));
+  });
 }

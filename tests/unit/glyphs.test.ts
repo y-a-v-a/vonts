@@ -44,7 +44,14 @@ describe('charset & skeletons', () => {
 
   it('facets turn bowls into polygons', () => {
     const faceted = buildSkeleton('o', style({ facets: 6 })).strokes[0];
-    expect(faceted).toHaveLength(7); // 6 sides + closing point
+    // 6 vertices plus the start/end points on the edge where the arc begins.
+    expect(faceted).toHaveLength(8);
+    const square = buildSkeleton('o', style({ facets: 4 })).strokes[0];
+    const b = bbox([square])!;
+    const round = bbox(buildSkeleton('o', style()).strokes)!;
+    // A 4-facet bowl is an axis-aligned square filling the same box as the round bowl.
+    expect(b.maxX - b.minX).toBeCloseTo(round.maxX - round.minX, 0);
+    expect(new Set(square.map((p) => Math.round(p.x))).size).toBeLessThanOrEqual(3);
     expect(buildSkeleton('o', style()).strokes[0].length).toBeGreaterThan(50);
   });
 

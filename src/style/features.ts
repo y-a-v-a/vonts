@@ -194,7 +194,8 @@ export function extractFeatures(doc: SketchDoc): SketchFeatures {
     curviness: total > 0 ? curved / total : 0,
     tension: tensionW > 0 ? tensionSum / tensionW : EMPTY_FEATURES.tension,
     cornerRatio: junctions > 0 ? cornerAngles.length / junctions : paths.every((p) => segments(p).every((s) => s.straight)) ? 1 : 0,
-    cornerAngle: cornerAngles.length ? median(cornerAngles) : 90,
+    // No corners at all (e.g. a few loose strokes): fall back to a softer hexagonal construction.
+    cornerAngle: cornerAngles.length ? median(cornerAngles) : 60,
     slant: slantW > total * 0.15 ? slantSum / slantW : 0,
     direction: ((deg(Math.atan2(sy, sx)) / 2) + 180) % 180,
     directionStrength: wSum > 0 ? Math.hypot(sx, sy) / wSum : 0,
