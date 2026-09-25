@@ -172,3 +172,7 @@ screenshots/    README screenshots
 - **The style mappings are heuristics.** They read a drawing's geometry, not its intent. What they miss: a drawing's *meaning* (a sketch of a cat won't give you cat-themed letters) and the optical corrections a type designer would make, such as overshoot, stroke-weight compensation and spacing tuned per pair.
 - **Recognition is case- and look-alike-blind.** Once the drawing is normalized, `o/O/0` and `l/I/1` look the same. The classifier has also only seen synthetic letters, so unusual handwriting may be read as a style sample instead.
 - **The exported font is minimal:** no kerning, no hinting, no punctuation beyond the space. Outlines are polygons, which render fine but make files larger than hand-drawn Béziers would.
+
+## License
+
+[MIT](LICENSE) © 2026 Vincent Bruijn. The house fonts in `src/assets/fonts/` were generated with vonts and are covered by the same license.

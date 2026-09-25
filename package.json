@@ -7,18 +7,6 @@
   "engines": {
     "node": ">=20"
   },
-  "scripts": {
-    "dev": "vite",
-    "build": "tsc --noEmit && vite build",
-    "preview": "vite preview --port 4173 --strictPort",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:e2e": "playwright test",
-    "train:model": "tsx scripts/train-classifier.ts",
-    "build:fonts": "tsx scripts/build-brand-fonts.ts",
-    "screenshots": "npm run build && node scripts/screenshots.mjs"
-  },
   "devDependencies": {
     "@playwright/test": "1.56",
     "@types/clipper-lib": "^6.4.0",
@@ -32,5 +20,18 @@
   "dependencies": {
     "clipper-lib": "^6.4.2",
     "opentype.js": "^2.0.0"
+  },
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --port 4173 --strictPort",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "train:model": "tsx scripts/train-classifier.ts",
+    "build:fonts": "tsx scripts/build-brand-fonts.ts",
+    "screenshots": "npm run build && node scripts/screenshots.mjs"
   }
 }
