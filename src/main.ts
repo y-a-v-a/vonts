@@ -108,7 +108,8 @@ async function run(): Promise<void> {
 const pct = (p: number) => `${Math.round(p * 100)}%`;
 
 function showResult(r: GenerationResult): void {
-  const [best, ...rest] = r.predictions;
+  const [best, ...others] = r.predictions;
+  const rest = others.filter((p) => p.p >= 0.01);
   if (!best) predictionEl.textContent = '';
   else if (r.anchor)
     predictionEl.textContent =

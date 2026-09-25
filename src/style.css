@@ -283,6 +283,18 @@ button.primary:not(:disabled) {
   grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
   gap: 6px;
 }
+@media (max-width: 560px) {
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+    gap: 4px;
+  }
+  .cell figcaption {
+    font-size: 9px;
+  }
+  .cell.from-sketch::after {
+    content: '•';
+  }
+}
 .cell {
   margin: 0;
   position: relative;

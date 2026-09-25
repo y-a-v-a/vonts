@@ -93,6 +93,21 @@ test('exports a valid OpenType font', async ({ page }) => {
   expect(font.numGlyphs).toBe(64);
   expect(JSON.stringify(font.names)).toContain('My Test Face');
   for (const ch of ['a', 'Q', '7']) expect(font.charToGlyph(ch).path.commands.length).toBeGreaterThan(3);
+
+  // Chromium sanitises web fonts with OTS, so a successful load means the file is well-formed.
+  const widths = await page.evaluate(async (b64) => {
+    const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+    const face = new FontFace('VontsExport', bytes.buffer);
+    await face.load();
+    document.fonts.add(face);
+    const ctx = document.createElement('canvas').getContext('2d')!;
+    ctx.font = '100px VontsExport, monospace';
+    const w = ctx.measureText('mmm').width;
+    ctx.font = '100px monospace';
+    return { vonts: w, fallback: ctx.measureText('mmm').width };
+  }, bytes.toString('base64'));
+  expect(widths.vonts).toBeGreaterThan(0);
+  expect(widths.vonts).not.toBe(widths.fallback);
 });
 
 test('weight slider regenerates with thicker strokes', async ({ page }) => {
