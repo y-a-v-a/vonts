@@ -4,8 +4,8 @@ import { contoursToSvgD } from '../geometry/svgPath';
 import { el, svgEl } from './svg';
 
 /** Visible vertical window for glyph cells, in font units (y-up). */
-const TOP = 820;
-const BOTTOM = -260;
+const TOP = 960;
+const BOTTOM = -340;
 
 export class GlyphGrid {
   private readonly cells = new Map<string, { fig: HTMLElement; svg: SVGSVGElement; path: SVGPathElement }>();

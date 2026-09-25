@@ -49,9 +49,10 @@ export class SketchView {
 
   private toDoc(e: PointerEvent): Vec {
     const r = this.svg.getBoundingClientRect();
+    const round = (n: number) => Math.round(n * 100) / 100;
     return {
-      x: ((e.clientX - r.left) / r.width) * PAD_SIZE,
-      y: ((e.clientY - r.top) / r.height) * PAD_SIZE,
+      x: round(((e.clientX - r.left) / r.width) * PAD_SIZE),
+      y: round(((e.clientY - r.top) / r.height) * PAD_SIZE),
     };
   }
 
