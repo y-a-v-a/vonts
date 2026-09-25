@@ -57,7 +57,8 @@ export class ToolController {
 
   constructor(
     doc: SketchDoc,
-    private readonly hitRadius = 14,
+    /** Pick radius in document units; the view updates it as the pad is resized. */
+    public hitRadius = 14,
     private readonly cb: ToolCallbacks = {},
   ) {
     this.doc = doc;

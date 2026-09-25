@@ -2,12 +2,14 @@ import { type Polyline, bbox, clamp } from './geometry/vec';
 import { type SketchDoc, docToPolylines } from './sketch/model';
 import { extractFeatures, featuresToStyle, docSeed, type SketchFeatures } from './style/features';
 import type { StyleParams } from './glyphs/style';
-import { FONT } from './glyphs/style';
 import { CHARSET } from './glyphs/charset';
 import { buildSkeleton } from './glyphs/build';
 import { makeGlyph, sideBearing, type GlyphData } from './glyphs/glyph';
 import { strokesToOutline } from './render/outline';
 import type { Prediction } from './classifier/classifier';
+import { padToFont } from './sketch/pad';
+
+export { padToFont, PAD_BASELINE, PAD_GUIDES } from './sketch/pad';
 
 export interface Classifier {
   classify(polylines: Polyline[], k?: number): Prediction[];
@@ -25,22 +27,6 @@ export interface GenerationResult {
 
 /** Minimum classifier probability before the drawing takes over a glyph slot. */
 export const ANCHOR_THRESHOLD = 0.5;
-
-/** Where the pad's baseline sits: pad y = 800 is the font baseline (y = 0). */
-export const PAD_BASELINE = FONT.ascender;
-
-export function padToFont(polylines: Polyline[]): Polyline[] {
-  return polylines.map((pl) => pl.map((p) => ({ x: p.x, y: PAD_BASELINE - p.y })));
-}
-
-/** Guides drawn on the pad, in pad coordinates. */
-export const PAD_GUIDES = {
-  ascender: PAD_BASELINE - FONT.ascenderLine,
-  capHeight: PAD_BASELINE - FONT.capHeight,
-  xHeight: PAD_BASELINE - 500,
-  baseline: PAD_BASELINE,
-  descender: PAD_BASELINE - FONT.descenderLine,
-};
 
 /** Place the user's drawing into a glyph slot, scaled to the height of that character's skeleton. */
 export function sketchGlyph(char: string, drawing: Polyline[], style: StyleParams): GlyphData | null {

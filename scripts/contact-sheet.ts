@@ -6,7 +6,7 @@ import { writeFileSync } from 'node:fs';
 import { CHARSET } from '../src/glyphs/charset';
 import { DEFAULT_STYLE, type StyleParams } from '../src/glyphs/style';
 import { makeGlyph } from '../src/glyphs/glyph';
-import { contoursToSvgD } from '../src/render/outline';
+import { contoursToSvgD } from '../src/geometry/svgPath';
 
 const out = process.argv[2] ?? 'contact-sheet.svg';
 const variants: Partial<StyleParams>[] = process.argv.slice(3).map((s) => JSON.parse(s));

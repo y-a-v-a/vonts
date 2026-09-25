@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>vonts</title>
+    <meta name="description" content="Draw one glyph with a pen tool, pause, and get a 62-character typeface. Export as OTF." />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M6 26 C6 10 26 22 26 6' fill='none' stroke='black' stroke-width='3'/%3E%3C/svg%3E" />
+  </head>
+  <body>
+    <header class="masthead">
+      <h1>vonts</h1>
+      <p>Draw one glyph. Pause for three seconds. Get sixty-two.</p>
+    </header>
+
+    <main>
+      <section class="studio" aria-label="Sketch pad">
+        <div class="toolbar" role="toolbar" aria-label="Drawing tools">
+          <div class="group">
+            <button type="button" data-tool="pen" aria-pressed="true" title="Pen (P): click for corners, drag for curves, click the first point to close, Enter/Esc/double-click to finish">Pen</button>
+            <button type="button" data-tool="select" aria-pressed="false" title="Direct selection (A): drag points, handles or paths; Alt-click a point to toggle smooth/corner; Delete removes">Select</button>
+          </div>
+          <div class="group">
+            <button type="button" id="undo" title="Undo (Ctrl/Cmd+Z)">Undo</button>
+            <button type="button" id="redo" title="Redo (Shift+Ctrl/Cmd+Z)">Redo</button>
+            <button type="button" id="clear" title="Clear the pad">Clear</button>
+          </div>
+          <label class="group weight" title="Stroke weight of the generated glyphs">
+            <span>Weight</span>
+            <input id="weight" type="range" min="16" max="160" step="2" value="70" />
+            <output id="weight-value" for="weight">70</output>
+          </label>
+        </div>
+
+        <div class="pad-frame">
+          <svg id="pad" data-testid="pad" role="application" aria-label="Sketch pad: draw with the pen tool"></svg>
+          <div class="idle" aria-hidden="true"><div id="idle-bar"></div></div>
+        </div>
+
+        <div class="status" aria-live="polite">
+          <p id="status" data-testid="status">Draw something with the pen: a letter, a mark, a squiggle.</p>
+          <p id="prediction" data-testid="prediction"></p>
+          <ul id="traits" class="traits" data-testid="traits"></ul>
+        </div>
+      </section>
+
+      <section class="glyphs" aria-label="Generated glyphs">
+        <div class="glyphs-head">
+          <h2>Glyphs</h2>
+          <div class="actions">
+            <button type="button" id="generate" title="Generate now instead of waiting">Generate now</button>
+            <label class="family"><span class="visually-hidden">Font name</span><input id="family" type="text" value="Vonts Sketch" maxlength="40" spellcheck="false" aria-label="Font name" /></label>
+            <button type="button" id="export" class="primary" disabled data-testid="export">Export .otf</button>
+          </div>
+        </div>
+        <div id="grid" class="grid" data-testid="grid"></div>
+      </section>
+
+      <section class="specimen" aria-label="Type specimen">
+        <input id="specimen-input" type="text" value="Sphinx of black quartz, judge my vow 0123456789" spellcheck="false" aria-label="Specimen text" />
+        <svg id="specimen" data-testid="specimen" role="img" aria-label="Specimen text set in the generated font"></svg>
+      </section>
+    </main>
+
+    <footer>
+      <p>
+        <kbd>P</kbd> pen · <kbd>A</kbd> select · <kbd>Enter</kbd>/<kbd>Esc</kbd> finish path · <kbd>Alt</kbd>+drag cusp ·
+        <kbd>Alt</kbd>+click toggle smooth · <kbd>Del</kbd> delete · <kbd>Ctrl/⌘</kbd>+<kbd>Z</kbd> undo
+      </p>
+    </footer>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
