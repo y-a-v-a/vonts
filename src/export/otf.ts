@@ -1,4 +1,10 @@
-import { Font, Glyph, Path } from 'opentype.js';
+import * as opentypeNs from 'opentype.js';
+
+// Bundlers resolve the ESM build (named exports); plain Node resolves the UMD build (default export).
+const opentype: typeof opentypeNs = (opentypeNs as unknown as { default?: typeof opentypeNs }).default ?? opentypeNs;
+const { Font, Glyph, Path } = opentype;
+type Font = opentypeNs.Font;
+type Path = opentypeNs.Path;
 import type { GlyphData } from '../glyphs/glyph';
 import { glyphName } from '../glyphs/charset';
 import { FONT } from '../glyphs/style';

@@ -4,7 +4,12 @@ import { History } from './sketch/history';
 import { ToolController, type Tool } from './sketch/tools';
 import { SketchView } from './ui/sketchView';
 import { GlyphGrid } from './ui/glyphGrid';
-import { Specimen } from './ui/specimen';
+import { Inspector } from './ui/inspector';
+import { LiveFont } from './ui/liveFont';
+import { sketchThumb } from './ui/thumb';
+import { PRESETS, QUILL, type Preset } from './sketch/presets';
+import quillUrl from './assets/fonts/vonts-quill.otf?url';
+import slabUrl from './assets/fonts/vonts-slab.otf?url';
 import { IdleTimer } from './idle';
 import { Engine } from './engine';
 import type { GenerationResult } from './generator';
@@ -35,8 +40,10 @@ const toolBtns = [...document.querySelectorAll<HTMLButtonElement>('[data-tool]')
 
 const history = new History(emptyDoc());
 const engine = new Engine();
-const grid = new GlyphGrid(gridEl);
-const specimen = new Specimen($<SVGSVGElement>('#specimen'), $<HTMLInputElement>('#specimen-input'));
+const inspector = new Inspector($<HTMLDialogElement>('#inspector'));
+const grid = new GlyphGrid(gridEl, (ch) => inspector.open(ch));
+const liveFont = new LiveFont($<HTMLElement>('#waterfall'));
+const padHint = $<HTMLElement>('#pad-hint');
 let latest: GenerationResult | null = null;
 /** The drawing changed since the glyphs on screen were generated. */
 let dirty = false;
@@ -54,6 +61,7 @@ const idle = new IdleTimer(IDLE_MS, () => void run());
 
 function docChanged(): void {
   dirty = true;
+  padHint.classList.toggle('gone', !isDocEmpty(tools.doc));
   if (isDocEmpty(tools.doc)) {
     idle.hold();
     showEmpty();
@@ -67,7 +75,7 @@ function showEmpty(): void {
   latest = null;
   dirty = false;
   grid.clear();
-  specimen.update([]);
+  liveFont.clear();
   traitsEl.replaceChildren();
   predictionEl.textContent = '';
   exportBtn.disabled = true;
@@ -76,6 +84,10 @@ function showEmpty(): void {
 
 function setStatus(text: string): void {
   statusEl.textContent = text;
+}
+
+function familyName(): string {
+  return familyEl.value.trim() || 'Vonts Sketch';
 }
 
 function weight(): number {
@@ -93,10 +105,15 @@ async function run(): Promise<void> {
     latest = result;
     dirty = false;
     grid.update(result.glyphs);
-    specimen.update(result.glyphs);
+    inspector.update(result.glyphs, result.style.xHeight);
     showResult(result);
     exportBtn.disabled = false;
     setStatus(`Generated ${result.glyphs.length} glyphs in ${Math.round(result.ms)} ms.`);
+    await liveFont.install(result.glyphs, familyName());
+    if (latest !== result) {
+      if (!latest) liveFont.clear();
+      return;
+    }
     document.body.dataset.generated = String(Number(document.body.dataset.generated ?? 0) + 1);
   } catch (err) {
     setStatus(`Generation failed: ${err instanceof Error ? err.message : String(err)}`);
@@ -110,12 +127,15 @@ const pct = (p: number) => `${Math.round(p * 100)}%`;
 function showResult(r: GenerationResult): void {
   const [best, ...others] = r.predictions;
   const rest = others.filter((p) => p.p >= 0.01);
-  if (!best) predictionEl.textContent = '';
-  else if (r.anchor)
-    predictionEl.textContent =
-      `Looks like “${best.char}” (${pct(best.p)}): your drawing fills that slot, the rest follow its lead.` +
-      (rest.length ? ` Also: ${rest.map((p) => `${p.char} ${pct(p.p)}`).join(', ')}.` : '');
-  else
+  predictionEl.replaceChildren();
+  if (best && r.anchor)
+    predictionEl.append(
+      'Looks like ',
+      el('span', { class: 'char', text: best.char }),
+      ` (${pct(best.p)}): your drawing fills that slot, the rest follow its lead.` +
+        (rest.length ? ` Also: ${rest.map((p) => `${p.char} ${pct(p.p)}`).join(', ')}.` : ''),
+    );
+  else if (best)
     predictionEl.textContent = `Not sure which character this is (${r.predictions.map((p) => `${p.char} ${pct(p.p)}`).join(' · ')}), so it's treated as a pure style sample.`;
 
   const s = r.style;
@@ -188,7 +208,7 @@ weightEl.addEventListener('input', () => {
 exportBtn.addEventListener('click', async () => {
   if (!latest) return;
   const { fontToArrayBuffer, fontFileName } = await import('./export/otf');
-  const family = familyEl.value.trim() || 'Vonts Sketch';
+  const family = familyName();
   const blob = new Blob([fontToArrayBuffer(latest.glyphs, { familyName: family })], { type: 'font/otf' });
   const url = URL.createObjectURL(blob);
   const a = el('a', { href: url, download: fontFileName(family) });
@@ -201,6 +221,7 @@ exportBtn.addEventListener('click', async () => {
 window.addEventListener('keydown', (e) => {
   const target = e.target as HTMLElement | null;
   if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
+  if (document.querySelector('dialog[open]')) return;
   const mod = e.metaKey || e.ctrlKey;
   if (mod && e.key.toLowerCase() === 'z') {
     e.preventDefault();
@@ -226,6 +247,25 @@ window.addEventListener('keydown', (e) => {
   requestAnimationFrame(tick);
 })();
 
+function loadPreset(p: Preset): void {
+  weightEl.value = String(p.weight);
+  weightOut.textContent = String(p.weight);
+  history.push(p.doc);
+  loadDoc(cloneDoc(p.doc));
+  idle.flush();
+}
+
+const presetsEl = $<HTMLElement>('#presets');
+for (const p of PRESETS) {
+  const b = el('button', { type: 'button', class: 'preset', 'data-preset': p.id, title: `Load the “${p.name}” sketch` }, presetsEl);
+  b.append(sketchThumb(p.doc), p.name);
+  b.addEventListener('click', () => loadPreset(p));
+}
+
+$<HTMLElement>('#credit-thumb').append(sketchThumb(QUILL.doc));
+$<HTMLAnchorElement>('#quill-download').href = quillUrl;
+$<HTMLAnchorElement>('#slab-download').href = slabUrl;
+
 syncButtons();
 
 /** Small scripting hook (used by the e2e tests, handy in the console). */
@@ -236,6 +276,7 @@ declare global {
       readonly sketch: SketchDoc;
       readonly result: GenerationResult | null;
       generateNow(): void;
+      loadPreset(id: string): void;
     };
   }
 }
@@ -252,4 +293,9 @@ window.vonts = {
     return latest;
   },
   generateNow: () => idle.flush(),
+  loadPreset(id: string) {
+    const p = PRESETS.find((x) => x.id === id);
+    if (!p) throw new Error(`Unknown preset ${id}`);
+    loadPreset(p);
+  },
 };

@@ -2,6 +2,7 @@ import type { Page } from '@playwright/test';
 
 /** Pointer helpers that address the pad in its own 0..1000 coordinate space. */
 export async function padTools(page: Page) {
+  await page.getByTestId('pad').evaluate((el) => el.scrollIntoView({ block: 'center', behavior: 'instant' }));
   const box = (await page.getByTestId('pad').boundingBox())!;
   const at = (x: number, y: number): [number, number] => [box.x + (x / 1000) * box.width, box.y + (y / 1000) * box.height];
   return {

@@ -10,15 +10,17 @@ const BOTTOM = -340;
 export class GlyphGrid {
   private readonly cells = new Map<string, { fig: HTMLElement; svg: SVGSVGElement; path: SVGPathElement }>();
 
-  constructor(root: HTMLElement) {
-    for (const ch of CHARSET) {
-      const fig = el('figure', { class: 'cell empty', 'data-char': ch, 'data-testid': 'glyph-cell', role: 'img', 'aria-label': `Glyph ${ch}` }, root);
+  constructor(root: HTMLElement, onPick?: (char: string) => void) {
+    CHARSET.forEach((ch, i) => {
+      const fig = el('button', { type: 'button', class: 'cell empty', 'data-char': ch, 'data-testid': 'glyph-cell', 'aria-label': `Glyph ${ch}` }, root);
+      fig.style.setProperty('--i', String(i));
+      fig.addEventListener('click', () => !fig.classList.contains('empty') && onPick?.(ch));
       const svg = svgEl('svg', { viewBox: `0 ${-TOP} 1000 ${TOP - BOTTOM}`, 'aria-hidden': 'true' }, fig);
       svgEl('line', { x1: -2000, x2: 3000, y1: 0, y2: 0, class: 'baseline' }, svg);
       const path = svgEl('path', { transform: 'scale(1 -1)', class: 'glyph' }, svg);
-      el('figcaption', { text: ch }, fig);
+      el('span', { class: 'caption', text: ch }, fig);
       this.cells.set(ch, { fig, svg, path });
-    }
+    });
   }
 
   clear(): void {
