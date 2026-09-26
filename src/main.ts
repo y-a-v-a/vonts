@@ -14,6 +14,7 @@ import { IdleTimer } from './idle';
 import { Engine } from './engine';
 import type { GenerationResult } from './generator';
 import { el } from './ui/svg';
+import { temperatureLevel } from './style/temperature';
 
 /** How long the pad has to be left alone before glyphs are generated. */
 const IDLE_MS = 3000;
@@ -33,6 +34,9 @@ const idleBar = $<HTMLElement>('#idle-bar');
 const weightEl = $<HTMLInputElement>('#weight');
 const weightOut = $<HTMLOutputElement>('#weight-value');
 const exportBtn = $<HTMLButtonElement>('#export');
+const temperatureEl = $<HTMLInputElement>('#temperature');
+const temperatureOut = $<HTMLOutputElement>('#temperature-value');
+const rerollBtn = $<HTMLButtonElement>('#reroll');
 const familyEl = $<HTMLInputElement>('#family');
 const undoBtn = $<HTMLButtonElement>('#undo');
 const redoBtn = $<HTMLButtonElement>('#redo');
@@ -45,6 +49,8 @@ const grid = new GlyphGrid(gridEl, (ch) => inspector.open(ch));
 const liveFont = new LiveFont($<HTMLElement>('#waterfall'));
 const padHint = $<HTMLElement>('#pad-hint');
 let latest: GenerationResult | null = null;
+/** Sampling seed for temperature > 0; Reroll picks a new one. */
+let seed = 1;
 /** The drawing changed since the glyphs on screen were generated. */
 let dirty = false;
 
@@ -94,13 +100,23 @@ function weight(): number {
   return Number(weightEl.value);
 }
 
+function temperature(): number {
+  return Number(temperatureEl.value) / 100;
+}
+
+function syncTemperature(): void {
+  const t = temperature();
+  temperatureOut.textContent = t > 0 ? `${t.toFixed(2)} ${temperatureLevel(t)}` : 'exact';
+  rerollBtn.disabled = t === 0;
+}
+
 async function run(): Promise<void> {
   const doc = cloneDoc(tools.doc);
   if (isDocEmpty(doc)) return showEmpty();
   gridEl.classList.add('busy');
   setStatus('Generating…');
   try {
-    const result = await engine.generate(doc, weight());
+    const result = await engine.generate(doc, weight(), temperature(), seed);
     if (!result) return; // superseded by a newer request
     latest = result;
     dirty = false;
@@ -151,6 +167,7 @@ function showResult(r: GenerationResult): void {
     ['x-height', String(s.xHeight)],
     ['waist', pct(s.waist)],
   ];
+  if (r.temperature > 0) traits.push(['temperature', `${temperatureLevel(r.temperature)} ${r.temperature.toFixed(2)} · #${r.seed}`]);
   traitsEl.replaceChildren(
     ...traits.map(([k, v]) => {
       const li = el('li', { 'data-trait': k });
@@ -196,6 +213,18 @@ undoBtn.addEventListener('click', undo);
 redoBtn.addEventListener('click', redo);
 $<HTMLButtonElement>('#clear').addEventListener('click', () => tools.clear());
 $<HTMLButtonElement>('#generate').addEventListener('click', () => idle.flush());
+
+let temperatureTimer: ReturnType<typeof setTimeout> | undefined;
+temperatureEl.addEventListener('input', () => {
+  syncTemperature();
+  if (isDocEmpty(tools.doc)) return;
+  clearTimeout(temperatureTimer);
+  temperatureTimer = setTimeout(() => void run(), 120);
+});
+rerollBtn.addEventListener('click', () => {
+  seed = (Math.random() * 0xffffffff) >>> 0 || 1;
+  if (!isDocEmpty(tools.doc)) void run();
+});
 
 let weightTimer: ReturnType<typeof setTimeout> | undefined;
 weightEl.addEventListener('input', () => {
@@ -267,6 +296,7 @@ $<HTMLAnchorElement>('#quill-download').href = quillUrl;
 $<HTMLAnchorElement>('#slab-download').href = slabUrl;
 
 syncButtons();
+syncTemperature();
 
 /** Small scripting hook (used by the e2e tests, handy in the console). */
 declare global {
@@ -277,6 +307,7 @@ declare global {
       readonly result: GenerationResult | null;
       generateNow(): void;
       loadPreset(id: string): void;
+      setTemperature(t: number, seed?: number): void;
     };
   }
 }
@@ -293,6 +324,12 @@ window.vonts = {
     return latest;
   },
   generateNow: () => idle.flush(),
+  setTemperature(t: number, s?: number) {
+    temperatureEl.value = String(Math.round(Math.max(0, Math.min(1, t)) * 100));
+    if (s !== undefined) seed = s >>> 0;
+    syncTemperature();
+    if (!isDocEmpty(tools.doc)) idle.flush();
+  },
   loadPreset(id: string) {
     const p = PRESETS.find((x) => x.id === id);
     if (!p) throw new Error(`Unknown preset ${id}`);

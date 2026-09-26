@@ -127,5 +127,32 @@ export function styledStrokes(char: string, style: StyleParams): GlyphSkeleton {
   let strokes = addTerminals(sk.strokes, style, m, sk.width);
   strokes = addJitter(strokes, style.jitter, charSeed(char, style.seed));
   strokes = applySlant(strokes, style.slant);
+  strokes = applyTiltLift(strokes, style.tilt, style.lift);
   return { char, strokes, width: sk.width };
+}
+
+/** Rotate about the ink's centre and shift vertically (per-glyph drift at high temperature). */
+export function applyTiltLift(strokes: Polyline[], degrees: number, lift: number): Polyline[] {
+  if (Math.abs(degrees) < 0.01 && Math.abs(lift) < 0.01) return strokes;
+  let sx = 0;
+  let sy = 0;
+  let n = 0;
+  for (const s of strokes)
+    for (const p of s) {
+      sx += p.x;
+      sy += p.y;
+      n++;
+    }
+  const cx = n ? sx / n : 0;
+  const cy = n ? sy / n : 0;
+  const t = (degrees * Math.PI) / 180;
+  const c = Math.cos(t);
+  const si = Math.sin(t);
+  return strokes.map((s) =>
+    s.map((p) => {
+      const x = p.x - cx;
+      const y = p.y - cy;
+      return { x: cx + x * c - y * si, y: cy + x * si + y * c + lift };
+    }),
+  );
 }

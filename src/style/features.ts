@@ -258,6 +258,7 @@ export function featuresToStyle(f: SketchFeatures, weight: number, seed = 1): St
   const roundness = polygonal ? 2 : clamp(2 * Math.pow(f.tension / 0.78, 1.8), 1.3, 5);
   const nibAngle = ((f.direction + 90 + 90) % 180) - 90;
   return {
+    ...DEFAULT_STYLE,
     widthFactor: clamp(Math.pow(f.aspect / 0.8, 0.45), 0.75, 1.35),
     xHeight: Math.round(clamp(500 + (1 / clamp(f.aspect, 0.2, 5) - 1) * 40, 440, 570)),
     slant: Math.abs(f.slant) < 3 ? 0 : clamp(f.slant, -18, 18),

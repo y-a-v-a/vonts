@@ -23,6 +23,10 @@ The **vonts** masthead is set in *Vonts Quill*, and the section headings in *Von
 | ![Dark mode with the Slab preset](screenshots/07-dark-slab.png) | ![Phone layout with the Hex preset](screenshots/08-mobile-hex.png) |
 | **Slab (dark mode):** short kinked stroke ends become serifs. | **Hex on a phone:** a hexagon becomes a six-sided alphabet. |
 
+![One sketch at rising temperature: exact, nudge, flip, drift](screenshots/09-temperature.png)
+
+**Temperature:** the same Loop sketch from 0 to 1. The style gets exaggerated, then serifs and faceted bowls flip in, then every letter drifts on its own.
+
 Regenerate them with `npm run screenshots`.
 
 ## Using it
@@ -47,6 +51,7 @@ The generator runs 3 seconds after your last edit. A striped bar under the pad c
 - **Presets:** the strip above the pad loads example sketches (Loop, Quill, Block, Slab, Zigzag, Hex, Wide A, Ribbon) and generates immediately.
 - **Inspector:** click a glyph for a close-up with metric lines, the centerline strokes it was built from, and its advance width. Step through glyphs with ← / →.
 - **Live specimen:** every generation is installed as a real web font through the `FontFace` API. The waterfall under the grid is editable text in that font: click a line and type.
+- **Temperature:** at 0 you get exactly the style your sketch implies. Turn it up for something less predictable (see [Temperature](#6-temperature-srcstyletemperaturets)). **Reroll** samples again at the same temperature.
 - **Export:** give the font a name and click **Export .otf**.
 
 ## How it works
@@ -113,6 +118,19 @@ Outer contours come out counter-clockwise and counters clockwise, as font raster
 
 The outlines are packed into a CFF-flavored OpenType font with [opentype.js](https://github.com/opentypejs/opentype.js): `.notdef`, `space` and the 62 glyphs, 1000 units per em. The e2e suite loads the exported file into Chromium's `FontFace`. Chromium sanitizes fonts with OTS, so a successful load means the file is well-formed.
 
+### 6. Temperature (`src/style/temperature.ts`)
+
+Everything above is deterministic: one sketch gives one style. The **Temperature** slider samples *around* that inferred style instead, much like temperature in a language model. It works in three overlapping levels:
+
+| Temperature | Level | What changes |
+| --- | --- | --- |
+| 0 | exact | Nothing. You get the inferred style. |
+| up to 0.35 | nudge | The whole family moves together. First it exaggerates what the sketch implied (more slant if you drew slanted, rounder if you drew round), then seeded noise grows (∝ t^1.5). Covers width, x-height, slant, roundness, contrast, nib angle, waist and wobble. |
+| 0.35–0.65 | flip | On/off traits may flip: stroke endings (plain/serif/hook), round vs. chisel pen, smooth vs. faceted bowls. Proportions inside letters vary too: arch height (n, h, m, u, r), aperture (c, e, C, G) and the k/K arm joint. |
+| 0.65–1 | drift | Each glyph gets its own small deviations, plus a slight tilt and lift, drifting from hand-made toward ransom note. |
+
+Sampling is seeded by the sketch and a seed that **Reroll** replaces, so a given sketch, temperature and seed always produce the same font. That keeps exports reproducible. The recognized, *drawn* glyph is never perturbed.
+
 ## Development
 
 Requires Node 20+.
@@ -137,7 +155,7 @@ npx tsx scripts/contact-sheet.ts sheet.svg '{}' '{"slant":12,"contrast":0.6}' '{
 node scripts/svg-to-png.mjs sheet.svg sheet.png
 ```
 
-In the browser console, `window.vonts` exposes `loadSketch(doc)`, `loadPreset(id)`, `sketch`, `result` and `generateNow()`.
+In the browser console, `window.vonts` exposes `loadSketch(doc)`, `loadPreset(id)`, `setTemperature(t, seed?)`, `sketch`, `result` and `generateNow()`.
 
 Run `npm run train:model` again whenever you change the skeletons, so the classifier keeps matching them. Also run `npm run build:fonts` so the house fonts pick up the change.
 
@@ -146,7 +164,7 @@ Run `npm run train:model` again whenever you change the skeletons, so the classi
 ```
 src/
   sketch/       document model, undo history, pen/select tool controller (DOM-free), pad metrics, presets
-  style/        sketch → features → style parameters
+  style/        sketch → features → style parameters; temperature sampling
   glyphs/       charset, style params, stroke pen, 62 skeletons, decorations, glyph assembly
   render/       stroke → outline expansion (Clipper)
   classifier/   rasterizer, MLP (inference + training), synthetic data, bundled weights

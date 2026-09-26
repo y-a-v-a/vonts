@@ -48,6 +48,14 @@
             <input id="weight" type="range" min="16" max="160" step="2" value="70" />
             <output id="weight-value" for="weight">70</output>
           </label>
+          <div class="group temperature">
+            <label for="temperature" title="0 = exactly what the sketch implies. Higher: exaggerate, then flip traits, then let every letter drift.">Temperature</label>
+            <input id="temperature" type="range" min="0" max="100" step="1" value="0" aria-describedby="temperature-value" />
+            <output id="temperature-value" for="temperature" data-testid="temperature-value">exact</output>
+            <button type="button" id="reroll" disabled title="Sample again at this temperature (new seed)">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3.5" /><circle cx="9" cy="9" r="1.2" fill="currentColor" /><circle cx="15" cy="15" r="1.2" fill="currentColor" /><circle cx="15" cy="9" r="1.2" fill="currentColor" /><circle cx="9" cy="15" r="1.2" fill="currentColor" /></svg>Reroll
+            </button>
+          </div>
         </div>
 
         <div class="pad-frame">

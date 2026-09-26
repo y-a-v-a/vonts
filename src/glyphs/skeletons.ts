@@ -25,6 +25,9 @@ export interface Metrics {
   W: number;
   D: number;
   waist: number;
+  arch: number;
+  aperture: number;
+  join: number;
 }
 
 export function metricsFor(style: StyleParams): Metrics {
@@ -42,6 +45,9 @@ export function metricsFor(style: StyleParams): Metrics {
     W: 470 * style.widthFactor + extra,
     D: 400 * style.widthFactor + extra,
     waist: style.waist,
+    arch: style.arch,
+    aperture: style.aperture,
+    join: style.join,
   };
 }
 
@@ -64,7 +70,7 @@ function lobe(p: StrokePen, xL: number, yT: number, yB: number, xR: number): voi
 
 /** n-style arch from a stem at x0 to x1, landing on the baseline. */
 function arch(p: StrokePen, m: Metrics, x0: number, x1: number): void {
-  const ra = (m.top - m.bot) * 0.45;
+  const ra = (m.top - m.bot) * m.arch;
   p.arc((x0 + x1) / 2, m.top - ra, (x1 - x0) / 2, ra, 180, 0).line(x1, m.bot).end();
 }
 
@@ -95,7 +101,7 @@ const LOWER: Record<string, GlyphDef> = {
   },
   c(p, m) {
     const w = m.w * 0.92;
-    bowl(p, m.h, w - m.h, m.bot, m.top, 50, 310).end();
+    bowl(p, m.h, w - m.h, m.bot, m.top, 50 + m.aperture, 310 - m.aperture).end();
     return w;
   },
   d(p, m) {
@@ -108,7 +114,7 @@ const LOWER: Record<string, GlyphDef> = {
     const { w, h, bot, top } = m;
     const cy = (bot + top) / 2;
     p.move(h, cy).line(w - h, cy);
-    bowl(p, h, w - h, bot, top, 0, 318).end();
+    bowl(p, h, w - h, bot, top, 0, 318 - m.aperture).end();
     return w;
   },
   f(p, m) {
@@ -152,10 +158,10 @@ const LOWER: Record<string, GlyphDef> = {
     const w = m.w * 0.9;
     const { h, bot, top, at } = m;
     const jx = h;
-    const jy = lerp(bot, top, 0.38);
+    const jy = lerp(bot, top, m.join);
     p.poly([h, at], [h, bot]);
     p.poly([w - h, top], [jx, jy]);
-    p.poly([lerp(jx, w - h, 0.38), lerp(jy, top, 0.38)], [w - h, bot]);
+    p.poly([lerp(jx, w - h, m.join), lerp(jy, top, m.join)], [w - h, bot]);
     return w;
   },
   l(p, m) {
@@ -194,7 +200,7 @@ const LOWER: Record<string, GlyphDef> = {
   r(p, m) {
     const w = m.w * 0.68;
     const { h, bot, top } = m;
-    const ra = (top - bot) * 0.45;
+    const ra = (top - bot) * m.arch;
     const rx = (w - 2 * h) / 1.35;
     p.poly([h, top], [h, bot]);
     p.arc(h + rx, top - ra, rx, ra, 180, 70).end();
@@ -216,7 +222,7 @@ const LOWER: Record<string, GlyphDef> = {
   },
   u(p, m) {
     const { w, h, bot, top } = m;
-    const ra = (top - bot) * 0.45;
+    const ra = (top - bot) * m.arch;
     p.move(h, top).line(h, bot + ra).arc(w / 2, bot + ra, w / 2 - h, ra, 180, 360).line(w - h, top).end();
     p.poly([w - h, top], [w - h, bot]);
     return w;
@@ -269,7 +275,7 @@ const UPPER: Record<string, GlyphDef> = {
     return W;
   },
   C(p, m) {
-    bowl(p, m.h, m.W - m.h, m.bot, m.ct, 45, 315).end();
+    bowl(p, m.h, m.W - m.h, m.bot, m.ct, 45 + m.aperture, 315 - m.aperture).end();
     return m.W;
   },
   D(p, m) {
@@ -293,7 +299,7 @@ const UPPER: Record<string, GlyphDef> = {
   },
   G(p, m) {
     const { W, h, bot, ct } = m;
-    bowl(p, h, W - h, bot, ct, 45, 360).line(W * 0.55, (bot + ct) / 2).end();
+    bowl(p, h, W - h, bot, ct, 45 + m.aperture, 360).line(W * 0.55, (bot + ct) / 2).end();
     return W;
   },
   H(p, m) {
@@ -317,10 +323,10 @@ const UPPER: Record<string, GlyphDef> = {
   },
   K(p, m) {
     const { W, h, bot, ct } = m;
-    const jy = lerp(bot, ct, 0.38);
+    const jy = lerp(bot, ct, m.join);
     p.poly([h, ct], [h, bot]);
     p.poly([W - h, ct], [h, jy]);
-    p.poly([lerp(h, W - h, 0.38), lerp(jy, ct, 0.38)], [W - h, bot]);
+    p.poly([lerp(h, W - h, m.join), lerp(jy, ct, m.join)], [W - h, bot]);
     return W;
   },
   L(p, m) {

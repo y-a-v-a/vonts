@@ -26,6 +26,16 @@ export interface StyleParams {
   jitter: number;
   /** Seed for deterministic wobble. */
   seed: number;
+  /** Height of n/h/m/u/r arches as a share of the x-height band (default 0.45). */
+  arch: number;
+  /** Extra opening of c/e/C/G apertures in degrees (0 = regular, + = more open). */
+  aperture: number;
+  /** Where k/K arms meet the stem, as a share of the height (default 0.38). */
+  join: number;
+  /** Per-glyph rotation in degrees (used by high temperature). */
+  tilt: number;
+  /** Per-glyph vertical shift in font units (used by high temperature). */
+  lift: number;
 }
 
 export const DEFAULT_STYLE: Readonly<StyleParams> = Object.freeze({
@@ -42,6 +52,11 @@ export const DEFAULT_STYLE: Readonly<StyleParams> = Object.freeze({
   terminal: 'plain',
   jitter: 0,
   seed: 1,
+  arch: 0.45,
+  aperture: 0,
+  join: 0.38,
+  tilt: 0,
+  lift: 0,
 });
 
 /** Fixed vertical metrics, font units (unitsPerEm = 1000, y-up, baseline 0). */

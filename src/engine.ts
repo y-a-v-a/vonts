@@ -5,6 +5,8 @@ export interface EngineRequest {
   id: number;
   doc: SketchDoc;
   weight: number;
+  temperature: number;
+  seed: number;
 }
 
 export type EngineResponse = { id: number; result: GenerationResult } | { id: number; error: string };
@@ -32,22 +34,22 @@ export class Engine {
   }
 
   /** Resolves with null when a newer request superseded this one. */
-  generate(doc: SketchDoc, weight: number): Promise<GenerationResult | null> {
+  generate(doc: SketchDoc, weight: number, temperature = 0, seed = 1): Promise<GenerationResult | null> {
     const id = ++this.seq;
     for (const [pid, w] of this.waiting) if (pid < id) w.resolve(null);
     for (const pid of [...this.waiting.keys()]) if (pid < id) this.waiting.delete(pid);
     return new Promise((resolve, reject) => {
       this.waiting.set(id, { resolve, reject });
-      if (this.worker) this.worker.postMessage({ id, doc, weight } satisfies EngineRequest);
-      else void this.inline(id, doc, weight);
+      if (this.worker) this.worker.postMessage({ id, doc, weight, temperature, seed } satisfies EngineRequest);
+      else void this.inline({ id, doc, weight, temperature, seed });
     });
   }
 
-  private async inline(id: number, doc: SketchDoc, weight: number): Promise<void> {
+  private async inline({ id, doc, weight, temperature, seed }: EngineRequest): Promise<void> {
     try {
       const [{ generate }, { loadClassifier }] = await Promise.all([import('./generator'), import('./classifier/classifier')]);
       const classifier = await loadClassifier();
-      this.settle({ id, result: generate(doc, { weight, classifier }) });
+      this.settle({ id, result: generate(doc, { weight, classifier, temperature, seed }) });
     } catch (err) {
       this.settle({ id, error: err instanceof Error ? err.message : String(err) });
     }

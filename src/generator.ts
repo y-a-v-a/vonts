@@ -7,6 +7,7 @@ import { buildSkeleton } from './glyphs/build';
 import { makeGlyph, sideBearing, type GlyphData } from './glyphs/glyph';
 import { strokesToOutline } from './render/outline';
 import type { Prediction } from './classifier/classifier';
+import { applyTemperature, glyphStyle } from './style/temperature';
 import { padToFont } from './sketch/pad';
 
 export { padToFont, PAD_BASELINE, PAD_GUIDES } from './sketch/pad';
@@ -22,7 +23,19 @@ export interface GenerationResult {
   /** Character slot filled with the user's own drawing, if the classifier was confident. */
   anchor: string | null;
   glyphs: GlyphData[];
+  /** Temperature and seed this result was sampled with. */
+  temperature: number;
+  seed: number;
   ms: number;
+}
+
+export interface GenerateOptions {
+  weight: number;
+  classifier?: Classifier | null;
+  /** 0 = the inferred style exactly; up to 1 = most surprising. */
+  temperature?: number;
+  /** Sampling seed for temperature > 0 (a "reroll" picks a new one). */
+  seed?: number;
 }
 
 /** Minimum classifier probability before the drawing takes over a glyph slot. */
@@ -53,7 +66,7 @@ export function sketchGlyph(char: string, drawing: Polyline[], style: StyleParam
 }
 
 /** Run the whole pipeline: sketch -> features (+ classifier) -> style -> 62 glyphs. */
-export function generate(doc: SketchDoc, opts: { weight: number; classifier?: Classifier | null }): GenerationResult {
+export function generate(doc: SketchDoc, opts: GenerateOptions): GenerationResult {
   const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now();
   const features = extractFeatures(doc);
   const style = featuresToStyle(features, opts.weight, docSeed(doc));
@@ -71,7 +84,14 @@ export function generate(doc: SketchDoc, opts: { weight: number; classifier?: Cl
     if (skAspect > 0.3) style.widthFactor = clamp((style.widthFactor * drAspect) / skAspect, 0.7, 1.4);
   }
 
-  const glyphs = CHARSET.map((ch) => (ch === anchor && sketchGlyph(ch, drawing, style)) || makeGlyph(ch, style));
+  const temperature = clamp(opts.temperature ?? 0, 0, 1);
+  const seed = (opts.seed ?? 1) >>> 0;
+  const sampleSeed = (docSeed(doc) ^ Math.imul(seed + 1, 0x9e3779b1)) >>> 0;
+  const family = applyTemperature(style, temperature, sampleSeed);
+
+  const glyphs = CHARSET.map(
+    (ch) => (ch === anchor && sketchGlyph(ch, drawing, family)) || makeGlyph(ch, glyphStyle(family, ch, temperature, sampleSeed)),
+  );
   const t1 = typeof performance !== 'undefined' ? performance.now() : Date.now();
-  return { style, features, predictions, anchor, glyphs, ms: t1 - t0 };
+  return { style: family, features, predictions, anchor, glyphs, temperature, seed, ms: t1 - t0 };
 }

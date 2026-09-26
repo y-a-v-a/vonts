@@ -306,6 +306,22 @@ button.primary:not(:disabled) {
   width: 150px;
   accent-color: var(--accent);
 }
+.toolbar .temperature {
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 100%;
+}
+.temperature label {
+  color: var(--muted);
+}
+.temperature input {
+  width: 130px;
+  accent-color: var(--accent);
+}
+.temperature output {
+  font: 600 13px ui-monospace, monospace;
+  min-width: 10ch;
+}
 .weight output {
   font: 600 14px ui-monospace, monospace;
   min-width: 3ch;
@@ -802,6 +818,10 @@ kbd {
   }
   .step {
     font-size: 28px;
+  }
+  .temperature input,
+  .weight input {
+    width: 120px;
   }
   .w-poster {
     grid-template-columns: 1fr;

@@ -151,6 +151,39 @@ const shot = (page, name, opts = {}) => page.screenshot({ path: `${OUT}${name}.p
   await page.close();
 }
 
+// 9. Temperature ladder: one sketch, rising temperature.
+{
+  const page = await open({ width: 1340, height: 900 });
+  await preset(page, 'loop', 1);
+  const rows = [];
+  let n = 1;
+  // Seed 3 happens to show every level clearly: exaggeration, then serifs, then facets and drift.
+  for (const [t, seed] of [[0, 3], [0.25, 3], [0.5, 3], [0.75, 3], [1, 3]]) {
+    await page.evaluate(([t, seed]) => window.vonts.setTemperature(t, seed), [t, seed]);
+    await page.waitForFunction((n) => Number(document.body.dataset.generated ?? 0) >= n, ++n);
+    await page.evaluate(() => document.fonts.ready);
+    await setText(page, { '.w1': 'Surprising 42' });
+    await page.locator('.w1').evaluate((el) => Object.assign(el.style, { whiteSpace: 'nowrap', fontSize: '92px', width: 'max-content' }));
+    const img = (await page.locator('.w1').screenshot({ omitBackground: true })).toString('base64');
+    const label = await page.getByTestId('temperature-value').textContent();
+    rows.push({ t, label, img });
+  }
+  const html = `<!doctype html><html><body style="margin:0;background:#f3efe6;background-image:radial-gradient(#d9d2c3 1.2px,transparent 1.3px);background-size:22px 22px;font-family:system-ui">
+  <div style="padding:26px;width:1320px;box-sizing:border-box;display:grid;gap:14px">
+  ${rows
+    .map(
+      (r, i) => `<div style="display:flex;align-items:center;gap:18px;background:#fffdf8;border:2px solid #171512;border-radius:14px;box-shadow:5px 5px 0 #171512;padding:8px 16px">
+      <div style="flex:none;width:150px"><div style="height:10px;border-radius:5px;background:#e3ddd0;overflow:hidden"><div style="height:100%;width:${r.t * 100}%;background:repeating-linear-gradient(-45deg,#ff5a36 0 8px,#ffd23f 8px 16px)"></div></div>
+      <div style="font:600 14px ui-monospace,monospace;margin-top:6px;color:#171512">${r.label}</div></div>
+      <img src="data:image/png;base64,${r.img}" style="height:96px;max-width:1080px;object-fit:contain;object-position:left"/></div>`,
+    )
+    .join('')}
+  </div></body></html>`;
+  await page.setContent(html);
+  await page.locator('div').first().screenshot({ path: `${OUT}09-temperature.png` });
+  await page.close();
+}
+
 await browser.close();
 server.kill();
 console.log('screenshots written to', OUT);
